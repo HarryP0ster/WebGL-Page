@@ -1,205 +1,140 @@
 "use strict";
 
-var vertexShader = [
-    "attribute vec3 vecPos;",
-    "attribute vec2 vert_uv;",
-    "varying vec2 frag_uv;",
-    "uniform mat4 mWorld;",
-    "uniform mat4 mProj;",
-    "uniform mat4 mView;",
-    "void main() {",
-    "frag_uv = vert_uv;",
-    "gl_Position = mProj * mView * mWorld * vec4(vecPos, 1.0);",
-    "}"
-    ].join('\n');
+var vertexShader;
     
-    var fragmentShader = [
-    "precision mediump float;",
-    "varying vec2 frag_uv;",
-    "uniform sampler2D img_texture;",
-    "void main() {",
-    "gl_FragColor = texture2D(img_texture, frag_uv);",
-    "}"
-    ].join('\n');
+var fragmentShader;
     
-    let canvas;
-    let gl;
+let canvas;
+let gl;
+let program;
+let uniformBuffer = [];
+let objects = [];
     
-    var init_page = function()
+var init_page = function()
+{    
+    canvas = document.getElementById("surface");
+    gl = canvas.getContext("webgl");
+    if (!gl)
     {
-        console.log("start");
+        console.log("Your browser doesn't support webgl");
+    }
     
-        canvas = document.getElementById("surface");
-        gl = canvas.getContext("webgl");
-        if (!gl)
-        {
-            console.log("Your browser doesn't support webgl");
-        }
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    gl.viewport(0, 0, innerWidth, innerHeight);
     
-        canvas.width = innerWidth;
-        canvas.height = innerHeight;
-        gl.viewport(0, 0, innerWidth, innerHeight);
+    gl.clearColor(0.28, 0, 0.98, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
     
-        gl.clearColor(0.28, 0, 0.98, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.enable(gl.DEPTH_TEST);
-    
-        var vert = gl.createShader(gl.VERTEX_SHADER);
-        var frag = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(vert, vertexShader);
-        gl.shaderSource(frag, fragmentShader);
-        compile_shader(vert);
-        compile_shader(frag);
-    
-        var program = gl.createProgram();
-        gl.attachShader(program, vert);
-        gl.attachShader(program, frag);
-        gl.linkProgram(program);
-    
-        var boxVertices = 
-        [ // X, Y, Z           U, V
-            // Top
-            -1.0, 1.0, -1.0,   0, 0,
-            -1.0, 1.0, 1.0,    0, 1,
-            1.0, 1.0, 1.0,     1, 1,
-            1.0, 1.0, -1.0,    1, 0,
-    
-            // Left
-            -1.0, 1.0, 1.0,    0, 0,
-            -1.0, -1.0, 1.0,   1, 0,
-            -1.0, -1.0, -1.0,  1, 1,
-            -1.0, 1.0, -1.0,   0, 1,
-    
-            // Right
-            1.0, 1.0, 1.0,    1, 1,
-            1.0, -1.0, 1.0,   0, 1,
-            1.0, -1.0, -1.0,  0, 0,
-            1.0, 1.0, -1.0,   1, 0,
-    
-            // Front
-            1.0, 1.0, 1.0,    1, 1,
-            1.0, -1.0, 1.0,   1, 0,
-            -1.0, -1.0, 1.0,  0, 0,
-            -1.0, 1.0, 1.0,   0, 1,
-    
-            // Back
-            1.0, 1.0, -1.0,    0, 0,
-            1.0, -1.0, -1.0,   0, 1,
-            -1.0, -1.0, -1.0,  1, 1,
-            -1.0, 1.0, -1.0,   1, 0,
-    
-            // Bottom
-            -1.0, -1.0, -1.0,   1, 1,
-            -1.0, -1.0, 1.0,    1, 0,
-            1.0, -1.0, 1.0,     0, 0,
-            1.0, -1.0, -1.0,    0, 1
-        ];
-    
-        var boxIndices =
-        [
-            // Top
-            0, 1, 2,
-            0, 2, 3,
-    
-            // Left
-            5, 4, 6,
-            6, 4, 7,
-    
-            // Right
-            8, 9, 10,
-            8, 10, 11,
-    
-            // Front
-            13, 12, 14,
-            15, 14, 12,
-    
-            // Back
-            16, 17, 18,
-            16, 18, 19,
-    
-            // Bottom
-            21, 20, 22,
-            22, 20, 23
-        ];
-    
-        var vertexBuffer = gl.createBuffer();
-        var indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(boxVertices), gl.STATIC_DRAW);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxIndices), gl.STATIC_DRAW);
-    
+    uniformBuffer.push(new Float32Array(16));
+    uniformBuffer.push(new Float32Array(16));
+    uniformBuffer.push(new Float32Array(16));
 
-
-
-        //gl.bindTexture(gl.TEXTURE_2D, null);
+    load_shader('default');
+    load_model('assets\\Toy\\toy.json', ['assets\\Toy\\toy_Col.png']);
+    //load_model('assets\\Box\\cube.json', ['assets\\Box\\dirty_crate_texture.png']);
 
     
-        var posAtt = gl.getAttribLocation(program, "vecPos");
-        var uvAtt = gl.getAttribLocation(program, "vert_uv");
-        gl.vertexAttribPointer(posAtt, 3, gl.FLOAT, gl.FALSE, 5 * Float32Array.BYTES_PER_ELEMENT, 0 * Float32Array.BYTES_PER_ELEMENT);
-        gl.enableVertexAttribArray(posAtt);
-        gl.vertexAttribPointer(uvAtt, 2, gl.FLOAT, gl.FALSE, 5 * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
-        gl.enableVertexAttribArray(uvAtt);
-    
+    requestAnimationFrame(draw_frame);
+};
 
-        var texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-            new Uint8Array([0, 0, 255, 255]));
+function draw_frame()
+{
+    gl.clearColor(0.28, 0, 0.98, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        var image = new Image();
-        image.src = "images\\crate.png";
-        image.addEventListener('load', function() {
-            console.log('h2ere');
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-            gl.generateMipmap(gl.TEXTURE_2D);
-          });
+    for (var i = 0; i < objects.length; i ++)
+    {
+        setup_ubo_matrices();
 
-        gl.bindTexture(gl.TEXTURE_2D, null);
-    
-        var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
-        var uboProjLoc = gl.getUniformLocation(program, "mProj");
-        var uboViewLoc = gl.getUniformLocation(program, "mView");
-    
-        var worldMat = new Float32Array(16);
-        var projMat = new Float32Array(16);
-        var viewjMat = new Float32Array(16);
-    
-        glMatrix.mat4.identity(worldMat);
-        glMatrix.mat4.lookAt(viewjMat, [0, 0, -5], [0, 0, 0], [0, 1, 0]);
-        glMatrix.mat4.perspective(projMat, 60 * Math.PI / 180,innerWidth/innerHeight, 0.1, 100);
-        gl.useProgram(program);
-    
-        gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, worldMat);
-        gl.uniformMatrix4fv(uboProjLoc, gl.FALSE, projMat);
-        gl.uniformMatrix4fv(uboViewLoc, gl.FALSE, viewjMat);
-    
-        var frame = 0;
         var identMat = new Float32Array(16);
         glMatrix.mat4.identity(identMat);
-        var loop = function() {
-            frame = performance.now() / 1000 / 1 / 2 * Math.PI;
-            glMatrix.mat4.rotate(worldMat, identMat, frame, [0, 1, 1]);
-            gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, worldMat);
+        var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
+        var frame = performance.now() / 1000 / 1 / 2 * Math.PI;
+        glMatrix.mat4.rotate(uniformBuffer[0], identMat, frame, [0, 1, 0]);
+        gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, uniformBuffer[0]);
 
-            gl.clearColor(0.28, 0, 0.98, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
-            requestAnimationFrame(loop);
-        };
-    
-    
-    
-        requestAnimationFrame(loop);
+
+        objects[i].drawObject(gl, program);
     }
     
-    function compile_shader(shader)
+    requestAnimationFrame(draw_frame);
+};
+    
+function compile_shader(shader)
+{
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
     {
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
-        {
-            console.log("Error compiling a shader", gl.getShaderInfoLog(shader));
-        }
+        console.log("Error compiling a shader", gl.getShaderInfoLog(shader));
     }
+};
+
+function setup_ubo_matrices()
+{
+    var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
+    var uboProjLoc = gl.getUniformLocation(program, "mProj");
+    var uboViewLoc = gl.getUniformLocation(program, "mView");
+    
+    glMatrix.mat4.identity(uniformBuffer[0]);
+    glMatrix.mat4.perspective(uniformBuffer[1], 60 * Math.PI / 180,innerWidth/innerHeight, 0.1, 100);
+    glMatrix.mat4.lookAt(uniformBuffer[2], [4, 2, 3], [0, 0.35, 0], [0, 1, 0]);
+
+    gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, uniformBuffer[0]);
+    gl.uniformMatrix4fv(uboProjLoc, gl.FALSE, uniformBuffer[1]);
+    gl.uniformMatrix4fv(uboViewLoc, gl.FALSE, uniformBuffer[2]);
+};
+
+function load_shader(name)
+{
+    var vert = gl.createShader(gl.VERTEX_SHADER);
+    var frag = gl.createShader(gl.FRAGMENT_SHADER);
+    LoadText("shaders\\" + name + ".vert", function(err,res) {
+        vertexShader = res;
+    });
+    LoadText("shaders\\" + name + ".frag", function(err, res) {
+        fragmentShader = res;
+    })
+
+    gl.shaderSource(vert, vertexShader);
+    gl.shaderSource(frag, fragmentShader);
+    compile_shader(vert);
+    compile_shader(frag);
+    
+    program = gl.createProgram();
+    gl.attachShader(program, vert);
+    gl.attachShader(program, frag);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+};
+
+async function load_model(url, textures)
+{
+    var obj;
+    LoadJSON(url, function(err, res) {
+        obj = res;
+    });
+        
+    var boxVertices = [];
+    for (var i = 0; i < obj['meshes'].length; i++)
+    {
+        boxVertices = boxVertices.concat.apply(boxVertices, obj['meshes'][i]['vertices']);
+    }
+
+    var boxIndices = [];
+    for (var i = 0; i < obj['meshes'].length; i++)
+    {
+        boxIndices = boxIndices.concat.apply(boxIndices, obj['meshes'][i]['faces']);
+    }
+
+    var uvCoordinates = [];
+    for (var i = 0; i < obj['meshes'].length; i++)
+    {
+        uvCoordinates = uvCoordinates.concat.apply(uvCoordinates, obj['meshes'][i]['texturecoords']['0']);
+    }
+    
+    var drawable = new Drawable(gl, boxVertices, boxIndices, uvCoordinates);
+    drawable.setTextures(textures);
+    objects.push(drawable);
+};
