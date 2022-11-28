@@ -12,12 +12,12 @@ var LoadText = function(url, callback)
   request.send();
 };
 
-var LoadImage = function(url, callback)
+var LoadImage = function(url, callback, target)
 {
   var image = new Image();
   image.onload = function()
   {
-    callback(null, image);
+    callback(null, image, target);
   };
   image.src = url;
 };
