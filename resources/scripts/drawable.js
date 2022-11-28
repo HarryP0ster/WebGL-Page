@@ -68,8 +68,8 @@ class Drawable {
         var uboViewLoc = gl.getUniformLocation(program, "mView");
 
         glMatrix.mat4.identity(this.uniformBuffer[0]);
-        glMatrix.mat4.perspective(this.uniformBuffer[1], 60 * Math.PI / 180,innerWidth/innerHeight, 0.1, 100);
-        glMatrix.mat4.lookAt(this.uniformBuffer[2], [4, 2, 3], [0, 0.35, 0], [0, 1, 0]);
+        glMatrix.mat4.perspective(this.uniformBuffer[1], 90 * Math.PI / 180,innerWidth/innerHeight, 0.1, 100);
+        glMatrix.mat4.lookAt(this.uniformBuffer[2], [0, 0, 10], [0, 0.35, 0], [0, 1, 0]);
     
         gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, this.uniformBuffer[0]);
         gl.uniformMatrix4fv(uboProjLoc, gl.FALSE, this.uniformBuffer[1]);
@@ -78,7 +78,7 @@ class Drawable {
         var identMat = new Float32Array(16);
         glMatrix.mat4.identity(identMat);
         var translation = glMatrix.vec3.create();
-        glMatrix.vec3.set(translation, GetRandom(-50, 5), GetRandom(-2, 5), GetRandom(-10, -5));
+        glMatrix.vec3.set(translation, GetRandom(-25, 25), GetRandom(1, 15), GetRandom(-10, -5));
         glMatrix.mat4.translate(this.uniformBuffer[0], identMat, translation);
     };
 

@@ -29,9 +29,9 @@ var init_page = function()
     gl.enable(gl.DEPTH_TEST);
 
     load_shader(program, 'default');
-    load_model('assets\\Box\\cube.json', ['assets\\Box\\dirty_crate_texture.png']);
-    load_model('assets\\Toy\\toy.json', ['assets\\Toy\\toy_Col.png']); 
-    for (var i = 0; i < 5; i++)
+    load_model('assets\\Ship\\ship.json', ['assets\\Ship\\ship_Col.png']); 
+    load_model('assets\\Ship\\ship.json', ['assets\\Ship\\ship_Col.png']); 
+    for (var i = 0; i < 7; i++)
     {
         load_model('assets\\Star\\star.json', ['assets\\Star\\star_Col.png']);
         objects[objects.length - 1].setColor(GetRandom(0, 1), GetRandom(0, 1), GetRandom(0, 1));
@@ -57,17 +57,21 @@ function draw_frame()
         switch (i)
         {
             case 0:
-                glMatrix.mat4.rotate(objects[i].UBO[0], identMat, frame, [0, 1, 0]);
                 var translation = glMatrix.vec3.create();
-                glMatrix.vec3.set(translation, 0, i * 1.0, -2.0);
+                glMatrix.vec3.set(translation, 0, 0, GetRandom(0.2, 0.8));
                 glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
+                glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.1, [0, 1, 0]);
+                glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.01, [1, 0, 0]);
+
                 break;
-            case 1:
-                glMatrix.mat4.rotate(objects[i].UBO[0], identMat, frame, [0, 1, 0]);
-                var translation = glMatrix.vec3.create();
-                glMatrix.vec3.set(translation, 0, i * 1.0, -2.0);
-                glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
-                break;
+                case 1:
+                    var translation = glMatrix.vec3.create();
+                    glMatrix.vec3.set(translation, 0, 0, GetRandom(-0.8, -0.2));
+                    glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
+                    glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.1, [0, 1, 0]);
+                    glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.01, [1, 0, 0]);
+    
+                    break;
             default:
                 glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], Math.random() / 10, [0, 1, 0]);
                 break;
