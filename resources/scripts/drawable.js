@@ -36,20 +36,50 @@ class Drawable {
     #obj_indices = [];
     #obj_vertices = [];
     #obj_uv = [];
+    #obj_color = [1, 1, 1]
     #vertexBuffer;
     #uvBuffer;
     #indexBuffer;
+    #colorBuffer;
+    uniformBuffer = [];
     texture
     img_inf = new ImageInfo(null, 0, 0);
 
-    constructor(context, vertices, indices, uv) {
+    get UBO() {
+        return this.uniformBuffer;
+    }
+
+    constructor(context, program, vertices, indices, uv) {
         this.obj_vertices = vertices;
         this.obj_indices = indices;
         this.obj_uv = uv;
         this.vertexBuffer = context.createBuffer();
         this.uvBuffer = context.createBuffer();
         this.indexBuffer = context.createBuffer();
+        this.colorBuffer = context.createBuffer();
         this.texture = context.createTexture();
+
+        this.uniformBuffer.push(new Float32Array(16));
+        this.uniformBuffer.push(new Float32Array(16));
+        this.uniformBuffer.push(new Float32Array(16));
+
+        var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
+        var uboProjLoc = gl.getUniformLocation(program, "mProj");
+        var uboViewLoc = gl.getUniformLocation(program, "mView");
+
+        glMatrix.mat4.identity(this.uniformBuffer[0]);
+        glMatrix.mat4.perspective(this.uniformBuffer[1], 60 * Math.PI / 180,innerWidth/innerHeight, 0.1, 100);
+        glMatrix.mat4.lookAt(this.uniformBuffer[2], [4, 2, 3], [0, 0.35, 0], [0, 1, 0]);
+    
+        gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, this.uniformBuffer[0]);
+        gl.uniformMatrix4fv(uboProjLoc, gl.FALSE, this.uniformBuffer[1]);
+        gl.uniformMatrix4fv(uboViewLoc, gl.FALSE, this.uniformBuffer[2]);
+
+        var identMat = new Float32Array(16);
+        glMatrix.mat4.identity(identMat);
+        var translation = glMatrix.vec3.create();
+        glMatrix.vec3.set(translation, GetRandom(-50, 5), GetRandom(-2, 5), GetRandom(-10, -5));
+        glMatrix.mat4.translate(this.uniformBuffer[0], identMat, translation);
     };
 
     loadTextures(context, textures) {
@@ -70,6 +100,12 @@ class Drawable {
         }
     };
 
+    setColor(r, g, b) {
+        this.#obj_color[0] = r;
+        this.#obj_color[1] = g;
+        this.#obj_color[2] = b;
+    };
+
     async drawObject(context, program) {
         if (this.img_inf.Pixels != null)
         {
@@ -87,6 +123,12 @@ class Drawable {
             var uvAtt = context.getAttribLocation(program, "vert_uv");
             context.vertexAttribPointer(uvAtt, 2, context.FLOAT, context.FALSE, 2 * Float32Array.BYTES_PER_ELEMENT, 0);
             context.enableVertexAttribArray(uvAtt);
+
+            context.bindBuffer(context.ARRAY_BUFFER, this.colorBuffer);
+            context.bufferData(context.ARRAY_BUFFER, new Float32Array(this.#obj_color), context.STATIC_DRAW);
+            var colAtt = context.getAttribLocation(program, "vecCol");
+            context.vertexAttribPointer(colAtt, 3, context.FLOAT, context.FALSE, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
+            context.vertexAttrib4f(colAtt, this.#obj_color[0], this.#obj_color[1], this.#obj_color[2], 1);
         
             context.bindTexture(context.TEXTURE_2D, this.texture);
             context.pixelStorei(context.UNPACK_FLIP_Y_WEBGL, true);

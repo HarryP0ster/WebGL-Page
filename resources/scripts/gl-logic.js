@@ -7,13 +7,14 @@ var fragmentShader;
 let canvas;
 let gl;
 let program;
-let uniformBuffer = [];
 let objects = [];
     
 var init_page = function()
 {    
     canvas = document.getElementById("surface");
     gl = canvas.getContext("webgl");
+    program = gl.createProgram();
+
     if (!gl)
     {
         console.log("Your browser doesn't support webgl");
@@ -26,17 +27,16 @@ var init_page = function()
     gl.clearColor(0.28, 0, 0.98, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
-    
-    uniformBuffer.push(new Float32Array(16));
-    uniformBuffer.push(new Float32Array(16));
-    uniformBuffer.push(new Float32Array(16));
-    uniformBuffer.push(new Float32Array(16));
-    uniformBuffer.push(new Float32Array(16));
-    uniformBuffer.push(new Float32Array(16));
 
-    load_shader('default');
+    load_shader(program, 'default');
     load_model('assets\\Box\\cube.json', ['assets\\Box\\dirty_crate_texture.png']);
-    load_model('assets\\Toy\\toy.json', ['assets\\Toy\\toy_Col.png']);  
+    load_model('assets\\Toy\\toy.json', ['assets\\Toy\\toy_Col.png']); 
+    for (var i = 0; i < 5; i++)
+    {
+        load_model('assets\\Star\\star.json', ['assets\\Star\\star_Col.png']);
+        objects[objects.length - 1].setColor(GetRandom(0, 1), GetRandom(0, 1), GetRandom(0, 1));
+    }
+
 
     requestAnimationFrame(draw_frame);
 };
@@ -48,18 +48,34 @@ function draw_frame()
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     for (var i = 0; i < objects.length; i ++)
-    {        
-        setup_ubo_matrices();
-
+    {    
         var identMat = new Float32Array(16);
         glMatrix.mat4.identity(identMat);
         var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
         var frame = performance.now() / 1000 / 1 / 2 * Math.PI;
-        glMatrix.mat4.rotate(uniformBuffer[0 + 3*i], identMat, frame, [0, 1, 0]);
-        var translation = glMatrix.vec3.create();
-        glMatrix.vec3.set(translation, 0, i * 1.0, -2.0);
-        glMatrix.mat4.translate(uniformBuffer[0 + 3*i], uniformBuffer[0 + 3*i], translation);
-        gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, uniformBuffer[0 + 3*i]);
+
+        switch (i)
+        {
+            case 0:
+                glMatrix.mat4.rotate(objects[i].UBO[0], identMat, frame, [0, 1, 0]);
+                var translation = glMatrix.vec3.create();
+                glMatrix.vec3.set(translation, 0, i * 1.0, -2.0);
+                glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
+                break;
+            case 1:
+                glMatrix.mat4.rotate(objects[i].UBO[0], identMat, frame, [0, 1, 0]);
+                var translation = glMatrix.vec3.create();
+                glMatrix.vec3.set(translation, 0, i * 1.0, -2.0);
+                glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
+                break;
+            default:
+                glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], Math.random() / 10, [0, 1, 0]);
+                break;
+        }
+
+
+
+        gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, objects[i].UBO[0]);
 
         objects[i].drawObject(gl, program);
     }
@@ -76,25 +92,7 @@ function compile_shader(shader)
     }
 };
 
-function setup_ubo_matrices()
-{
-    for (var i = 0; i < 2; i++)
-    {
-        var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
-        var uboProjLoc = gl.getUniformLocation(program, "mProj");
-        var uboViewLoc = gl.getUniformLocation(program, "mView");
-        
-        glMatrix.mat4.identity(uniformBuffer[0 + 3*i]);
-        glMatrix.mat4.perspective(uniformBuffer[1 + 3*i], 60 * Math.PI / 180,innerWidth/innerHeight, 0.1, 100);
-        glMatrix.mat4.lookAt(uniformBuffer[2 + 3*i], [4, 2, 3], [0, 0.35, 0], [0, 1, 0]);
-    
-        gl.uniformMatrix4fv(uboWorldLoc, gl.FALSE, uniformBuffer[0 + 3*i]);
-        gl.uniformMatrix4fv(uboProjLoc, gl.FALSE, uniformBuffer[1 + 3*i]);
-        gl.uniformMatrix4fv(uboViewLoc, gl.FALSE, uniformBuffer[2 + 3*i]);
-    }
-};
-
-function load_shader(name)
+function load_shader(program, name)
 {
     var vert = gl.createShader(gl.VERTEX_SHADER);
     var frag = gl.createShader(gl.FRAGMENT_SHADER);
@@ -110,7 +108,6 @@ function load_shader(name)
     compile_shader(vert);
     compile_shader(frag);
     
-    program = gl.createProgram();
     gl.attachShader(program, vert);
     gl.attachShader(program, frag);
     gl.linkProgram(program);
@@ -141,8 +138,12 @@ async function load_model(url, textures)
     {
         uvCoordinates = uvCoordinates.concat.apply(uvCoordinates, obj['meshes'][i]['texturecoords']['0']);
     }
-    
-    var drawable = new Drawable(gl, boxVertices, boxIndices, uvCoordinates);
+
+    var drawable = new Drawable(gl, program, boxVertices, boxIndices, uvCoordinates);
     drawable.loadTextures(gl, textures);
     objects.push(drawable);
 };
+
+function GetRandom(min, max) {
+    return Math.random() * (max - min) + min;
+  };
