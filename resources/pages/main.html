@@ -16,6 +16,27 @@
                 margin: 0;
             }
 
+            .back2 {
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                animation: gradient 10s infinite;
+                background: linear-gradient(145deg, rgb(26, 2, 2), rgb(5, 36, 10), rgb(6, 20, 37), rgb(29, 4, 34));
+                background-size: 400% 400%;
+                margin: 0;
+            }
+
+            .gradient_text {
+                position: fixed;
+                color: whitesmoke;
+                font-family: sans-serif;
+                font-weight: bold;
+                font-size: 3em;
+                left: 2em;
+                text-shadow: rgb(33, 1, 82) 3px 4px;
+                margin-top: 1vh;
+            }
+
             @keyframes gradient {
                 0% {
                     background-position: 0% 0%;
@@ -34,13 +55,19 @@
     </head>
     <body onload="init_page();" style="display:contents;">
         <p style="width: 100%;height: 100%;position: fixed;background-color: rgb(31, 31, 39);margin:0;"></p>
+        <p class="back2"></p>
         <p class="back"></p>
         <canvas id="surface" style="position:fixed;width: 100%; height: 100%;mask-image: none;-webkit-mask-image: none;margin: 0;">
             No WEBGL support for you, sorry
         </canvas>
-        <p style="position: fixed;color: whitesmoke;font-family: sans-serif;font-weight: 900;font-size: 45px;left:2em; text-shadow: rgb(109, 60, 187) 3px 4px;">
-            WELCOME TO WEBGL! PLEASE FOLLOW ME
-        </p>
+        <div class="gradient_text" style="display:flex;">
+            <p style="color: rgb(255, 51, 0);font-size:2em;margin-top: 1vh;">W</p><p>ELCOME TO WEBGL!&nbsp</p><p style="color: rgb(255, 51, 0);font-size:2em;margin-top: 1vh;">P</p><p>LEASE FOLLOW ME</p>
+        </div>
+        <div style="position: fixed;width: 30em; height:35em;background-color: rgba(200, 200, 200, 0.75);border-radius: 25px; top: 10em;left: 5em;border: solid; border-color: black;border-width: 4px; padding: 2em;" hidden>
+            <p style="font-family:sans-serif;font-weight:bold; text-align: center;font-size: 25;">
+                Text
+            </p>
+        </div>
         <script type="text/javascript" src="libraries\gl-matrix\gl-matrix.js"></script>
         <script type="text/javascript" src="scripts\asset-manager.js"></script>
         <script type="text/javascript" src="scripts\drawable.js"></script>

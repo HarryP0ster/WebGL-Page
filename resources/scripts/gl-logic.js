@@ -1,13 +1,13 @@
 "use strict";
 
 var vertexShader;
-    
 var fragmentShader;
     
 let canvas;
 let gl;
 let program;
 let objects = [];
+let pos = [GetRandom(-5, 5), GetRandom(-5, 5)];
     
 var init_page = function()
 {    
@@ -29,12 +29,15 @@ var init_page = function()
     gl.enable(gl.DEPTH_TEST);
 
     load_shader(program, 'default');
+    load_model('assets\\Toy\\toy.json', ['assets\\Toy\\toy_Col.png']);
+    objects[objects.length - 1].setPosition(program, GetRandom(-25, 25), GetRandom(5, 10), GetRandom(-10, -5));
     load_model('assets\\Ship\\ship.json', ['assets\\Ship\\ship_Col.png']); 
-    load_model('assets\\Ship\\ship.json', ['assets\\Ship\\ship_Col.png']); 
+    objects[objects.length - 1].setPosition(program, GetRandom(-25, 25), GetRandom(5, 10), GetRandom(-10, -5));
     for (var i = 0; i < 7; i++)
     {
         load_model('assets\\Star\\star.json', ['assets\\Star\\star_Col.png']);
         objects[objects.length - 1].setColor(GetRandom(0, 1), GetRandom(0, 1), GetRandom(0, 1));
+        objects[objects.length - 1].setPosition(program, i + 25 * GetRandom(-1, 1), GetRandom(5, 10) + i * GetRandom(-1, 1), GetRandom(-10, -5));
     }
 
 
@@ -44,7 +47,7 @@ var init_page = function()
 function draw_frame()
 {
     gl.viewport(0, 0, innerWidth, innerHeight);
-    gl.clearColor(0, 0, 0, 0.0);
+    gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     for (var i = 0; i < objects.length; i ++)
@@ -52,29 +55,19 @@ function draw_frame()
         var identMat = new Float32Array(16);
         glMatrix.mat4.identity(identMat);
         var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
-        var frame = performance.now() / 1000 / 1 / 2 * Math.PI;
+        var frame = performance.now() / 1000 / 2;
 
-        switch (i)
+        if (i < 2)
         {
-            case 0:
-                var translation = glMatrix.vec3.create();
-                glMatrix.vec3.set(translation, 0, 0, GetRandom(0.2, 0.8));
-                glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
-                glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.1, [0, 1, 0]);
-                glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.01, [1, 0, 0]);
-
-                break;
-                case 1:
-                    var translation = glMatrix.vec3.create();
-                    glMatrix.vec3.set(translation, 0, 0, GetRandom(-0.8, -0.2));
-                    glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
-                    glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.1, [0, 1, 0]);
-                    glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], 0.01, [1, 0, 0]);
-    
-                    break;
-            default:
-                glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], Math.random() / 10, [0, 1, 0]);
-                break;
+            var translation = glMatrix.vec3.create();
+            glMatrix.vec3.set(translation, pos[i] + pos[i] + Math.pow(-1, i) * Math.tan(frame), pos[i], 0);
+            glMatrix.mat4.rotate(objects[i].UBO[0], identMat, frame * pos[i], [0, 1, 0]);
+            glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], Math.cos(frame) / 2, [1, 0, 0]);
+            glMatrix.mat4.translate(objects[i].UBO[0], objects[i].UBO[0], translation);
+        }
+        else
+        {
+            glMatrix.mat4.rotate(objects[i].UBO[0], objects[i].UBO[0], Math.random() / 10 * Math.pow(-1, i), [0, 1, 0]);
         }
 
 
@@ -143,7 +136,7 @@ async function load_model(url, textures)
         uvCoordinates = uvCoordinates.concat.apply(uvCoordinates, obj['meshes'][i]['texturecoords']['0']);
     }
 
-    var drawable = new Drawable(gl, program, boxVertices, boxIndices, uvCoordinates);
+    var drawable = new Drawable(gl, boxVertices, boxIndices, uvCoordinates);
     drawable.loadTextures(gl, textures);
     objects.push(drawable);
 };

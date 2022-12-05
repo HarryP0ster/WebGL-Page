@@ -49,7 +49,7 @@ class Drawable {
         return this.uniformBuffer;
     }
 
-    constructor(context, program, vertices, indices, uv) {
+    constructor(context, vertices, indices, uv) {
         this.obj_vertices = vertices;
         this.obj_indices = indices;
         this.obj_uv = uv;
@@ -62,7 +62,9 @@ class Drawable {
         this.uniformBuffer.push(new Float32Array(16));
         this.uniformBuffer.push(new Float32Array(16));
         this.uniformBuffer.push(new Float32Array(16));
+    };
 
+    setPosition(program, x, y, z) {
         var uboWorldLoc = gl.getUniformLocation(program, "mWorld");
         var uboProjLoc = gl.getUniformLocation(program, "mProj");
         var uboViewLoc = gl.getUniformLocation(program, "mView");
@@ -78,7 +80,7 @@ class Drawable {
         var identMat = new Float32Array(16);
         glMatrix.mat4.identity(identMat);
         var translation = glMatrix.vec3.create();
-        glMatrix.vec3.set(translation, GetRandom(-25, 25), GetRandom(1, 15), GetRandom(-10, -5));
+        glMatrix.vec3.set(translation, x, y, z);
         glMatrix.mat4.translate(this.uniformBuffer[0], identMat, translation);
     };
 
