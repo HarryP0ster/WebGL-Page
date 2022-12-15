@@ -46,6 +46,8 @@ var init_page = function()
 
 function draw_frame()
 {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
     gl.viewport(0, 0, innerWidth, innerHeight);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
