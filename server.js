@@ -1,6 +1,6 @@
 "use strict";
 
-const port = 3000;
+const port = 1337;
 
 const express = require('express');
 const path = require('path');
@@ -14,7 +14,7 @@ app.get('/', function (req, res) {
 
 app.listen(port, function (error) {
     if (!error)
-      console.log("Server is Listening at Port 3000!");
+      console.log("Server is Listening at Port 1337!");
     else
       console.log("Error Occurred");
   });

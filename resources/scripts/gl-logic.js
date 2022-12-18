@@ -100,7 +100,7 @@ function load_shader(program, name)
     });
     LoadText("shaders\\" + name + ".frag", function(err, res) {
         fragmentShader = res;
-    })
+    });
 
     gl.shaderSource(vert, vertexShader);
     gl.shaderSource(frag, fragmentShader);
