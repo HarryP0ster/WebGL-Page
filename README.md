@@ -26,4 +26,4 @@ npm install express
 node server.js
 ```
 
-Go to _http://127.0.0.1:1337 in your browser
+Go to http://127.0.0.1:1337 in your browser
