@@ -27,3 +27,5 @@ node server.js
 ```
 
 Go to http://127.0.0.1:1337 in your browser
+
+![webgl](https://user-images.githubusercontent.com/82880494/211724766-6ef5165e-0751-4aed-87ed-3cda29dfd779.png)
