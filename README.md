@@ -12,7 +12,7 @@ npm --version
 
 2. Clone the repo and go to the folder
 ```
-git clone https://github.com/HarryP0ster/WebGL-Page (if you don't have it on your PC already)
+git clone https://github.com/HarryP0ster/WebGL-Page
 cd install-directory
 ```
 
